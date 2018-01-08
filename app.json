@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "expo-zenparkin",
+    "name": "zenparkin",
     "description": "This project is really great.",
-    "slug": "expo-zenparkin",
+    "slug": "zenparkin",
     "privacy": "public",
     "sdkVersion": "24.0.0",
     "platforms": ["ios", "android"],

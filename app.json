@@ -8,9 +8,9 @@
     "platforms": ["ios", "android"],
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/zenparkin_icon.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/zenparkin_splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

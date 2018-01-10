@@ -16,6 +16,7 @@ export default class Home extends React.Component {
   state = {
     mapRegion: { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.0922, longitudeDelta: 0.0421 },
     visibleModal: null,
+    markers: [],
   };
   
   _handleMapRegionChange = mapRegion => {
@@ -30,22 +31,29 @@ export default class Home extends React.Component {
       provider={MapView.PROVIDER_GOOGLE}
       onRegionChange={this._handleMapRegionChange}
     >
+      
       <View>
-        {this._renderButton('Default modal', () => this.setState({ visibleModal: 1 }))}
-        <Modal isVisible={this.state.visibleModal === 1}>
-          {this._openSearchModal()}
-        </Modal>
+        {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
+        <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
+        {this.state.markers.map(marker => (
+          <MapView.Marker
+            key={marker.key}
+            coordinate={marker.coordinate}
+            pinColor={marker.color}
+          />
+        ))}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            onPress={() => this.setState({ markers: [] })}
+            style={styles.bubble}
+          >
+            <Text>Tap to create a marker of random color</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </MapView>
     );
   }
-
-  _renderModalContent = () => (
-    <View style={styles.modalContent}>
-      <Text>Hello!</Text>
-      {this._renderButton('Close', () => this.setState({ visibleModal: null }))}
-    </View>
-  );
 
   _renderButton = (text, onPress) => (
     <TouchableOpacity onPress={onPress}>
@@ -55,11 +63,10 @@ export default class Home extends React.Component {
     </TouchableOpacity>
   );
 
-  _openSearchModal = () => {
-    console.log("*** Inside search modal ***");
-    return(
+  _renderModalContent = () => (
+    <View style={styles.container}>
       <GooglePlacesAutocomplete
-        placeholder='Search Parking Spot'
+        placeholder='Search for Free Parking Spot'
         minLength={2} 
         autoFocus={false}
         returnKeyType={'search'} 
@@ -67,15 +74,57 @@ export default class Home extends React.Component {
         fetchDetails={true}
         renderDescription={row => row.description} 
         onPress={(data, details = null) => { 
-          console.log(data);
+          console.log(details.geometry.location);
+          this.setState({ visibleModal: null });
+          this._createMarker(details.geometry.location);
         }}
         query={{
           key: 'AIzaSyBTw2kt66WnBFtbxLjcuy1R7444_X_t-eQ',
           language: 'en',
         }}
       />
+     
+      
+    </View>
+  );
+
+  _createMarker = (location) => {
+    console.log("Helllooooo", location.lat);
+    var e = {
+      latitude: location.lat,
+      longitude: location.lng
+    }
+    this.setState({
+      markers: [
+        ...this.state.markers,
+        {
+          coordinate: e,
+          key: '1',
+        },
+      ],
+    });
+    console.log(this.state.markers);
+    
+  }
+
+  onMapPress(e) {
+    this.setState({
+      markers: [
+        ...this.state.markers,
+        {
+          coordinate: e.nativeEvent.coordinate,
+          key: id++,
+          color: randomColor(),
+        },
+      ],
+    });
+  }
+  _openSearchModal = (text) => {
+    this.setState({ visibleModal: 1 });
+    return(
+      <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
     );
-    {this._renderButton('Close', () => this.setState({ visibleModal: null }))};
+   
   }
 }
 
@@ -112,13 +161,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   button: {
-    backgroundColor: 'lightblue',
-    padding: 12,
-    margin: 16,
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 4,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: 'gray',
+    marginTop: 50,
+    marginLeft: 10,
+    height: 40,
+    width: 350,
+    borderWidth: 1,
+    
   },
   modalContent: {
     backgroundColor: 'white',
@@ -127,5 +180,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 4,
     borderColor: 'rgba(0, 0, 0, 0.1)',
+    width: 50
   }
 });

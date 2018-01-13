@@ -78,7 +78,6 @@ export default class Home extends React.Component {
           console.log(details);
         }}
         query={{
-          key: 'AIzaSyBTw2kt66WnBFtbxLjcuy1R7444_X_t-eQ',
           language: 'en',
         }}
       />

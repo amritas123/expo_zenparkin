@@ -16,7 +16,7 @@ export default class Home extends React.Component {
   state = {
     mapRegion: { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.0922, longitudeDelta: 0.0421 },
     visibleModal: null,
-    markers: [],
+    markers: {coordinate: {latitude: 37.78825,longitude: -122.4324}}
   };
   
   _handleMapRegionChange = mapRegion => {
@@ -35,16 +35,14 @@ export default class Home extends React.Component {
       <View>
         {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
         <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
-        {this.state.markers.map(marker => (
-          <MapView.Marker
-            key={marker.key}
-            coordinate={marker.coordinate}
-            pinColor={marker.color}
-          />
-        ))}
-        <View style={styles.buttonContainer}>
+        
+        <MapView.Marker
+          coordinate={marker.coordinate}
+        />
+      
+        <View style={styles.button}>
           <TouchableOpacity
-            onPress={() => this.setState({ markers: [] })}
+            onPress={() => this._createMarker()}
             style={styles.bubble}
           >
             <Text>Tap to create a marker of random color</Text>
@@ -103,8 +101,14 @@ export default class Home extends React.Component {
         },
       ],
     });
-    console.log(this.state.markers);
-    
+    console.log("&&&& markers = ", this.state.markers);
+    {this.state.markers.map(marker => (
+      <MapView.Marker
+        key={marker.key}
+        coordinate={marker.coordinate}
+        pinColor={marker.color}
+      />
+    ))}
   }
 
   onMapPress(e) {

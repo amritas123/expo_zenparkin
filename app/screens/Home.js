@@ -16,7 +16,7 @@ export default class Home extends React.Component {
   state = {
     mapRegion: { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.0922, longitudeDelta: 0.0421 },
     visibleModal: null,
-    markers: {coordinate: {latitude: 37.78825,longitude: -122.4324}}
+    markers: []
   };
   
   _handleMapRegionChange = mapRegion => {
@@ -26,28 +26,22 @@ export default class Home extends React.Component {
   render() {
     return(
     <MapView
-      style={styles.container}
+      style={styles.modal}
       region={this.state.mapRegion}
       provider={MapView.PROVIDER_GOOGLE}
       onRegionChange={this._handleMapRegionChange}
     >
-      
       <View>
         {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
         <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
-        
-        <MapView.Marker
-          coordinate={marker.coordinate}
-        />
-      
-        <View style={styles.button}>
-          <TouchableOpacity
-            onPress={() => this._createMarker()}
-            style={styles.bubble}
-          >
-            <Text>Tap to create a marker of random color</Text>
-          </TouchableOpacity>
-        </View>
+        {this.state.markers.map(marker => (
+          <MapView.Marker
+            key={marker.key}
+            coordinate={marker.coordinate}
+            pinColor={marker.color}
+          />
+        ))}
+
       </View>
     </MapView>
     );
@@ -62,7 +56,7 @@ export default class Home extends React.Component {
   );
 
   _renderModalContent = () => (
-    <View style={styles.container}>
+    <View style={styles.modal}>
       <GooglePlacesAutocomplete
         placeholder='Search for Free Parking Spot'
         minLength={2} 
@@ -72,12 +66,13 @@ export default class Home extends React.Component {
         fetchDetails={true}
         renderDescription={row => row.description} 
         onPress={(data, details = null) => { 
-          console.log(details.geometry.location);
+          console.log("**** Location = ", details.geometry.location);
           this.setState({ visibleModal: null });
           this._createMarker(details.geometry.location);
-          console.log(details);
+          
         }}
         query={{
+          
           language: 'en',
         }}
       />
@@ -102,33 +97,7 @@ export default class Home extends React.Component {
       ],
     });
     console.log("&&&& markers = ", this.state.markers);
-    {this.state.markers.map(marker => (
-      <MapView.Marker
-        key={marker.key}
-        coordinate={marker.coordinate}
-        pinColor={marker.color}
-      />
-    ))}
-  }
-
-  onMapPress(e) {
-    this.setState({
-      markers: [
-        ...this.state.markers,
-        {
-          coordinate: e.nativeEvent.coordinate,
-          key: id++,
-          color: randomColor(),
-        },
-      ],
-    });
-  }
-  _openSearchModal = (text) => {
-    this.setState({ visibleModal: 1 });
-    return(
-      <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
-    );
-   
+    
   }
 }
 
@@ -137,6 +106,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#ecf0f1',
+    borderBottomColor: '#bbb',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  modal: {
+    flex: 1,
     backgroundColor: '#ecf0f1',
   },
   paragraph: {

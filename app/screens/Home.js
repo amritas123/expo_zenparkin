@@ -37,80 +37,53 @@ export default class Home extends React.Component {
             "longitude": -122.4467964,
           },
           "key": id++,
-          "title": "Amrita"
+          "title": "Target"
         },
       ],
       events: [],
     };
     this._renderMarker = this._renderMarker.bind(this);
-    this._renderCallout = this._renderCallout.bind(this);
+    
   };
 
-  makeEvent(e, name) {
-    return {
-      id: ide++,
-      name,
-      data: e.nativeEvent ? e.nativeEvent : e,
-    };
-  }
+  _handleMapRegionChange = mapRegion => {
+    this.setState({ mapRegion });
+  };
 
-  recordEvent(name) {
-    return e => {
-      this.setState(prevState => ({
-        events: [
-          this.makeEvent(e, name),
-          ...prevState.events.slice(0, 10),
-        ],
-      }));
-    };
-  }
+  _createMarker = (details) => {
+    var e = {
+      latitude: details.geometry.location.lat,
+      longitude: details.geometry.location.lng
+    }
+    this.setState({
+      markers: [
+        ...this.state.markers,
+        {
+          coordinate: e,
+          key: id++,
+          title: details.name
+        },
+      ],
+    });
+  };
 
   _renderMarker(){
+    console.log("_renderMarker");
     return(
       this.state.markers.map(marker => (
         <MapView.Marker
           key={marker.key}
           coordinate={marker.coordinate}
-        />
-        
+          title={marker.title}
+          >
+          <MapView.Callout>
+            <Text style={styles.calloutText}>{marker.title}</Text>
+        </MapView.Callout>
+        </MapView.Marker>
       )
-      
     )
     );
   };
-  
-  _handleMapRegionChange = mapRegion => {
-    this.setState({ mapRegion });
-  };
-
-  render() {
-    
-    return(
-    <MapView
-      style={styles.modal}
-      region={this.state.mapRegion}
-      provider={MapView.PROVIDER_GOOGLE}
-      onRegionChange={this._handleMapRegionChange}
-    >
-      <View>
-        {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
-        <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
-        {this._renderMarker()}
-        {this._renderCallout()}
-      </View>
-    </MapView>
-    );
-  }
-
-  _renderCallout() {
-    console.log("Inside Callout");
-    return (
-      <MapView.Callout
-        >
-        <Text>Amrita</Text>
-      </MapView.Callout>
-    )
-  }
 
   _renderButton = (text, onPress) => (
     <TouchableOpacity onPress={onPress}>
@@ -131,37 +104,35 @@ export default class Home extends React.Component {
         fetchDetails={true}
         renderDescription={row => row.description} 
         onPress={(data, details = null) => { 
-          console.log("Search Location = ", details.formatted_address);
           this.setState({ visibleModal: null });
-          this._createMarker(details.geometry.location);
+          this._createMarker(details);
+          //this._renderMarker();
+          console.log("State Value = ", this.state);
         }}
         query={{
-          key: 'AIzaSyBTw2kt66WnBFtbxLjcuy1R7444_X_t-eQ',
+          
           language: 'en',
         }}
       />
-     
-      
     </View>
   );
 
-  _createMarker = (location) => {
-    var e = {
-      latitude: location.lat,
-      longitude: location.lng
-    }
-    this.setState({
-      markers: [
-        ...this.state.markers,
-        {
-          coordinate: e,
-          key: id++,
-          title: "Amrita"
-        },
-      ],
-    });
-    console.log("State Value = ", this.state);
-    {this._renderMarker()};
+  render() {
+    return(
+    <MapView
+      style={styles.modal}
+      region={this.state.mapRegion}
+      provider={MapView.PROVIDER_GOOGLE}
+      onRegionChange={this._handleMapRegionChange}
+    >
+      <View>
+        {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
+        <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
+        {this._renderMarker()}
+        
+      </View>
+    </MapView>
+    );
   }
 }
 
@@ -225,5 +196,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderColor: 'rgba(0, 0, 0, 0.1)',
     width: 50
-  }
+  },
+  calloutText:{
+    flex: 1,
+    backgroundColor: '#fffa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderColor: 'black',
+    width: 100,
+    height: 25,
+    fontSize: 16,
+  },
 });

@@ -12,11 +12,71 @@ import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import Modal from "react-native-modal";
 
+let id = 0;
+let ide = 0;
+
 export default class Home extends React.Component {
-  state = {
-    mapRegion: { latitude: 37.78825, longitude: -122.4324, latitudeDelta: 0.0922, longitudeDelta: 0.0421 },
-    visibleModal: null,
-    markers: []
+
+  constructor(props) {
+    console.log("Inside Constructor");
+    super(props);
+
+    this.state = {
+      mapRegion: {
+        latitude: 37.78825,
+        longitude: -122.4324,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      },
+      visibleModal: null,
+      markers: [
+        {
+          "coordinate": 
+          {
+            "latitude": 37.78200029999999,
+            "longitude": -122.4467964,
+          },
+          "key": id++,
+          "title": "Amrita"
+        },
+      ],
+      events: [],
+    };
+    this._renderMarker = this._renderMarker.bind(this);
+    this._renderCallout = this._renderCallout.bind(this);
+  };
+
+  makeEvent(e, name) {
+    return {
+      id: ide++,
+      name,
+      data: e.nativeEvent ? e.nativeEvent : e,
+    };
+  }
+
+  recordEvent(name) {
+    return e => {
+      this.setState(prevState => ({
+        events: [
+          this.makeEvent(e, name),
+          ...prevState.events.slice(0, 10),
+        ],
+      }));
+    };
+  }
+
+  _renderMarker(){
+    return(
+      this.state.markers.map(marker => (
+        <MapView.Marker
+          key={marker.key}
+          coordinate={marker.coordinate}
+        />
+        
+      )
+      
+    )
+    );
   };
   
   _handleMapRegionChange = mapRegion => {
@@ -24,6 +84,7 @@ export default class Home extends React.Component {
   };
 
   render() {
+    
     return(
     <MapView
       style={styles.modal}
@@ -34,17 +95,21 @@ export default class Home extends React.Component {
       <View>
         {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
         <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
-        {this.state.markers.map(marker => (
-          <MapView.Marker
-            key={marker.key}
-            coordinate={marker.coordinate}
-            pinColor={marker.color}
-          />
-        ))}
-
+        {this._renderMarker()}
+        {this._renderCallout()}
       </View>
     </MapView>
     );
+  }
+
+  _renderCallout() {
+    console.log("Inside Callout");
+    return (
+      <MapView.Callout
+        >
+        <Text>Amrita</Text>
+      </MapView.Callout>
+    )
   }
 
   _renderButton = (text, onPress) => (
@@ -66,13 +131,12 @@ export default class Home extends React.Component {
         fetchDetails={true}
         renderDescription={row => row.description} 
         onPress={(data, details = null) => { 
-          console.log("**** Location = ", details.geometry.location);
+          console.log("Search Location = ", details.formatted_address);
           this.setState({ visibleModal: null });
           this._createMarker(details.geometry.location);
-          
         }}
         query={{
-          
+          key: 'AIzaSyBTw2kt66WnBFtbxLjcuy1R7444_X_t-eQ',
           language: 'en',
         }}
       />
@@ -82,7 +146,6 @@ export default class Home extends React.Component {
   );
 
   _createMarker = (location) => {
-    console.log("Helllooooo", location.lat);
     var e = {
       latitude: location.lat,
       longitude: location.lng
@@ -92,12 +155,13 @@ export default class Home extends React.Component {
         ...this.state.markers,
         {
           coordinate: e,
-          key: '1',
+          key: id++,
+          title: "Amrita"
         },
       ],
     });
-    console.log("&&&& markers = ", this.state.markers);
-    
+    console.log("State Value = ", this.state);
+    {this._renderMarker()};
   }
 }
 
@@ -113,6 +177,7 @@ const styles = StyleSheet.create({
   modal: {
     flex: 1,
     backgroundColor: '#ecf0f1',
+   
   },
   paragraph: {
     margin: 24,

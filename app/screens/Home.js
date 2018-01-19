@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { 
+  Dimensions,
+  Image,
   StyleSheet, 
   Text,
   TextInput, 
@@ -7,13 +9,40 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { Card, Button } from "react-native-elements";
+import { Card, Button, List, ListItem, SearchBar } from "react-native-elements";
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import Modal from "react-native-modal";
+import CustomCallout from './CustomCallout';
 
 let id = 0;
-let ide = 0;
+let { width, height } = Dimensions.get('window');
+const ASPECT_RATIO = width / height;
+const LATITUDE = 37.78825;
+const LONGITUDE = -122.4324;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+const list = [
+  {
+    title: 'Target',
+    address: '2675 Geary Blvd, San Francisco, CA 94118, USA',
+    distance: '0.1m',
+    icon: 'av-timer'
+  },
+  {
+    title: 'Ulta Beauty',
+    address: '2675 Geary Blvd, San Francisco, CA 94118, USA',
+    distance: '0.1m',
+    icon: 'av-timer'
+  },
+  {
+    title: 'Trader Joe\'s',
+    address: '2692 Geary Blvd, San Francisco, CA 94118, USA',
+    distance: '0.2m',
+    icon: 'av-timer'
+  }
+]
 
 export default class Home extends React.Component {
 
@@ -22,12 +51,12 @@ export default class Home extends React.Component {
     super(props);
 
     this.state = {
-      mapRegion: {
-        latitude: 37.78825,
-        longitude: -122.4324,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      },
+      mapRegion: new MapView.AnimatedRegion({
+        latitude: LATITUDE,
+        longitude: LONGITUDE,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LONGITUDE_DELTA
+      }),
       visibleModal: null,
       markers: [
         {
@@ -37,20 +66,41 @@ export default class Home extends React.Component {
             "longitude": -122.4467964,
           },
           "key": id++,
-          "title": "Target"
+          "title": "Target",
+          "address": ""
         },
       ],
-      events: [],
     };
     this._renderMarker = this._renderMarker.bind(this);
     
   };
 
+
   _handleMapRegionChange = mapRegion => {
+    console.log("### Inside _handleMapRegionChange");
     this.setState({ mapRegion });
   };
 
+  componentDidMount() {
+    console.log("Inside componentDidMount");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        if (this.map) {
+          this.map.animateToRegion({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005
+          })
+        }
+      },
+      (error) => alert('Error: Are location services on?'),
+      { enableHighAccuracy: true }
+    )
+  }
+
   _createMarker = (details) => {
+    console.log("**** _createMarker ");
     var e = {
       latitude: details.geometry.location.lat,
       longitude: details.geometry.location.lng
@@ -61,14 +111,22 @@ export default class Home extends React.Component {
         {
           coordinate: e,
           key: id++,
-          title: details.name
+          title: details.name,
+          address: details.formatted_address
         },
       ],
     });
   };
 
+  componentWillReceiveProps(nextProps) {
+    console.log("componentWillReceiveProps");
+    this.setState({
+        markers: nextProps.markers
+    })
+  }
+
   _renderMarker(){
-    console.log("_renderMarker");
+    console.log("Render Marker Values = ", this.state.markers);
     return(
       this.state.markers.map(marker => (
         <MapView.Marker
@@ -76,9 +134,26 @@ export default class Home extends React.Component {
           coordinate={marker.coordinate}
           title={marker.title}
           >
-          <MapView.Callout>
-            <Text style={styles.calloutText}>{marker.title}</Text>
-        </MapView.Callout>
+          <MapView.Callout tooltip style={styles.customView}>
+            <CustomCallout>
+              <List containerStyle={{backgroundColor: '#ffffd8', marginTop: 0, paddingLeft: 0}}>
+                {
+                  list.map((item, i) => (
+                    <ListItem
+                      key={i}
+                      title={
+                        <Text style={{fontSize: 12, marginBottom: 0, paddingBottom: 0, fontWeight: 'bold',}}>{item.title}</Text>
+                      }
+                      subtitle={
+                          <Text style={{fontSize: 8,}}>{item.address}</Text>
+                      }  
+                      rightTitle={item.distance}
+                    />
+                  ))
+                }
+              </List>
+            </CustomCallout>
+          </MapView.Callout>
         </MapView.Marker>
       )
     )
@@ -106,8 +181,8 @@ export default class Home extends React.Component {
         onPress={(data, details = null) => { 
           this.setState({ visibleModal: null });
           this._createMarker(details);
+          //this.setState(this.state);
           //this._renderMarker();
-          console.log("State Value = ", this.state);
         }}
         query={{
           
@@ -118,21 +193,54 @@ export default class Home extends React.Component {
   );
 
   render() {
+    console.log("Inside Render");
     return(
-    <MapView
+    <MapView.Animated
       style={styles.modal}
+      //onPress={(e) => this.onMapPress(e)}
       region={this.state.mapRegion}
       provider={MapView.PROVIDER_GOOGLE}
       onRegionChange={this._handleMapRegionChange}
+      mapType={"standard"}
+      showsUserLocation={true}
+      showsMyLocationButton={true}
+      showsTraffic={true}
+      zoomEnabled={true}
+      followsUserLocation={true}
+      showsBuildings={true}
+      zoomControlEnabled={true}
+      scrollEnabled={true}
+      
     >
       <View>
+      <SearchBar
+        lightTheme
+        containerStyle={{marginTop: 50}}
+        onChangeText={() => this._renderModalContent}
+        icon={{ type: 'font-awesome', name: 'search' }}
+        placeholder='Type Here...' />
         {this._renderButton('Search for Free Parking Spot', () => this.setState({ visibleModal: 1 }))}
         <Modal isVisible={this.state.visibleModal === 1}>{this._renderModalContent()}</Modal>
         {this._renderMarker()}
         
       </View>
-    </MapView>
+    </MapView.Animated>
     );
+  }
+
+  onMapPress(e) {
+    console.log("%%%% Map pressed = ", e.nativeEvent);
+    this.setState({
+      markers: [
+        ...this.state.markers,
+        {
+          coordinate: e.nativeEvent.coordinate,
+          key: id++,
+          color: 'black'
+          
+        },
+      ],
+    });
   }
 }
 
@@ -206,5 +314,43 @@ const styles = StyleSheet.create({
     width: 100,
     height: 25,
     fontSize: 16,
+  },
+  customView: { 
+    width: 210,
+    height: 230,
+    backgroundColor: 'transparent',
+    borderWidth: 16,
+    borderColor: 'transparent',
+    borderTopColor: '#ffffd8',
+    alignSelf: 'center',
+  },
+  calloutview: {
+    flexDirection: 'row',
+  },
+  calloutinfotitle: {
+    width: 120,
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#34495e',
+  },
+  calloutinfoaddr: {
+    width: 120,
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#34495e',
+    marginBottom: 5,
+  },
+  calloutinfodistance: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#34495e',
+  },
+  image: {
+    width: 50, 
+    height: 50, 
+  },
+  subtitleView: {
+    flexDirection: 'row',
+    
   },
 });
